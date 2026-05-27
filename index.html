@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Группийн Төсвийн Платформ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.19.0/fonts/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F4F6FB;--card:#fff;--border:rgba(0,0,0,0.07);
+  --text:#1a1a2e;--sub:#8890A4;--accent:#7C3AED;--accent2:#A78BFA;
+  --green:#22C55E;--red:#EF4444;--amber:#F59E0B;--blue:#3B82F6;--radius:16px;
+  --shadow:0 2px 12px rgba(0,0,0,0.06);
+}
+body{font-family:'Segoe UI',sans-serif;font-size:13px;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+#loadingBar{display:none;height:3px;background:linear-gradient(90deg,var(--accent),var(--blue));position:fixed;top:0;left:0;right:0;z-index:999;border-radius:2px}
+#errorMsg{display:none;position:fixed;bottom:16px;right:16px;background:#FEF2F2;color:#991B1B;border:1px solid #FECACA;border-radius:12px;padding:12px 16px;font-size:12px;z-index:999;max-width:320px}
+.sidebar{width:220px;min-height:100vh;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;padding:0 0 16px}
+.logo{padding:22px 20px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.logo-icon{width:34px;height:34px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;flex-shrink:0}
+.logo h2{font-size:13px;font-weight:700;color:var(--text)}
+.logo p{font-size:10px;color:var(--sub);margin-top:1px}
+.nav{flex:1;padding:12px 10px}
+.nav-sec{padding:8px 10px 4px;font-size:10px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;cursor:pointer;color:var(--sub);font-size:12px;border:none;background:none;width:100%;text-align:left;border-radius:10px;margin-bottom:2px;transition:all .15s}
+.nav-item:hover{background:#F3F0FF;color:var(--accent)}
+.nav-item.active{background:#F3F0FF;color:var(--accent);font-weight:600}
+.nav-item .ti{font-size:16px;width:18px}
+.co-item{display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;font-size:12px;border:none;background:none;width:100%;text-align:left;border-radius:10px;margin-bottom:2px;color:var(--sub);transition:all .15s}
+.co-item:hover{background:#F3F0FF;color:var(--text)}
+.co-item.active{background:#F3F0FF;color:var(--accent);font-weight:600}
+.co-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.nbadge{font-size:9px;padding:2px 5px;border-radius:4px;margin-left:auto}
+.live-badge{background:#DCFCE7;color:#166534}
+.mock-badge{background:#FEF3C7;color:#92400E}
+.load-badge{background:#EFF6FF;color:#1E40AF}
+.divider{height:1px;background:var(--border);margin:8px 10px}
+.sidebar-bottom{padding:12px 16px;border-top:1px solid var(--border);margin-top:auto}
+.user-row{display:flex;align-items:center;gap:8px}
+.user-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--blue));display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0}
+.user-name{font-size:12px;font-weight:500}
+.user-role{font-size:10px;color:var(--sub)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{padding:14px 24px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+.topbar h1{font-size:16px;font-weight:700;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.period-selector{position:relative}
+.period-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:12px;font-weight:500;color:var(--text);transition:all .15s}
+.period-btn:hover{border-color:var(--accent);color:var(--accent)}
+.period-btn .ti{font-size:14px;color:var(--accent)}
+.period-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);z-index:100;min-width:320px;box-shadow:0 8px 30px rgba(0,0,0,0.12);padding:16px}
+.period-row{display:flex;gap:0}
+.period-col{flex:1}
+.period-divider{width:1px;background:var(--border);margin:0 14px}
+.period-sec-title{font-size:10px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.period-item{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--text);transition:background .1s;user-select:none}
+.period-item:hover{background:#F3F0FF}
+.period-item input{accent-color:var(--accent);cursor:pointer;width:13px;height:13px;flex-shrink:0}
+.month-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px}
+.period-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.period-apply{padding:7px 18px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s}
+.period-apply:hover{background:#6D28D9}
+.btn-sm{padding:7px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--sub);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+#connStatus{font-size:11px;font-weight:600}
+#lastUpd{font-size:10px;color:var(--sub)}
+.co-tabs{display:flex;gap:6px;padding:12px 24px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.co-tab{padding:7px 16px;font-size:12px;border:1px solid var(--border);background:var(--bg);cursor:pointer;color:var(--sub);border-radius:20px;display:flex;align-items:center;gap:6px;font-weight:500;transition:all .15s;white-space:nowrap}
+.co-tab:hover{border-color:var(--accent);color:var(--accent);background:#F3F0FF}
+.co-tab.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.co-tab .ti{font-size:14px}
+.content{flex:1;padding:20px 24px;overflow-y:auto}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kpi-card{background:var(--card);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden;border:1px solid var(--border)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
+.kpi-card.blue::before{background:var(--blue)}
+.kpi-card.green::before{background:var(--green)}
+.kpi-card.amber::before{background:var(--amber)}
+.kpi-card.purple::before{background:var(--accent)}
+.kpi-card.red::before{background:var(--red)}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.kpi-label{font-size:12px;color:var(--sub);font-weight:500}
+.kpi-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.kpi-icon.blue{background:#EFF6FF;color:var(--blue)}
+.kpi-icon.green{background:#F0FDF4;color:var(--green)}
+.kpi-icon.amber{background:#FFFBEB;color:var(--amber)}
+.kpi-icon.purple{background:#F5F3FF;color:var(--accent)}
+.kpi-icon.red{background:#FEF2F2;color:var(--red)}
+.kpi-val{font-size:22px;font-weight:700;margin-bottom:6px;letter-spacing:-.5px}
+.kpi-sub{font-size:11px;display:flex;align-items:center;gap:4px}
+.pos{color:var(--green)}.neg{color:var(--red)}.warn{color:var(--amber)}
+.sec{background:var(--card);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:6px}
+.sec-title{font-size:14px;font-weight:700;color:var(--text)}
+.badge{font-size:10px;padding:3px 9px;border-radius:20px;background:#EFF6FF;color:var(--blue);font-weight:600}
+.badge-g{background:#F0FDF4;color:#166534}
+.badge-o{background:#FEF3C7;color:#92400E}
+.badge-p{background:#F5F3FF;color:#6D28D9}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:8px 10px;text-align:left;color:var(--sub);font-weight:600;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+th.r,td.r{text-align:right}
+td{padding:9px 10px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr.grp td{background:#FAFBFF;font-weight:600;font-size:11px;color:var(--sub)}
+tr.sub-tot td{background:#F8FAFF;font-weight:600}
+tr.grand-tot td{background:#F3F0FF;font-weight:700;color:var(--accent)}
+tr:not(.grp):not(.sub-tot):not(.grand-tot):hover td{background:#FAFBFF}
+.co-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.co-card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid var(--border);cursor:pointer;transition:all .2s}
+.co-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.1);border-color:var(--accent2)}
+.co-card-top{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.co-card-name{font-size:12px;font-weight:700;flex:1}
+.co-card-val{font-size:20px;font-weight:700;margin-bottom:2px}
+.co-card-sub{font-size:11px;color:var(--sub);margin-bottom:10px}
+.co-card-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.co-card-fill{height:100%;border-radius:3px}
+.co-card-footer{display:flex;justify-content:space-between;font-size:10px;color:var(--sub)}
+.charts-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.cw{position:relative}
+.pb{height:5px;background:var(--border);border-radius:3px;overflow:hidden;width:64px;display:inline-block;vertical-align:middle}
+.pf{height:100%;border-radius:3px}
+.month-pills{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px}
+.mpill{padding:3px 9px;border-radius:12px;font-size:11px;border:1px solid var(--border);cursor:pointer;background:none;color:var(--sub);transition:all .12s;font-weight:500}
+.mpill:hover{border-color:var(--accent);color:var(--accent)}
+.mpill.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div id="loadingBar"></div>
+<div id="errorMsg"></div>
+
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-icon"><i class="ti ti-chart-pie-2"></i></div>
+    <div><h2>Төсвийн Систем</h2><p>Группийн удирдлага</p></div>
+  </div>
+  <nav class="nav">
+    <div class="nav-sec">Үндсэн</div>
+    <button class="nav-item active" onclick="showPage('group-dash',this)">
+      <i class="ti ti-layout-dashboard"></i>Нэгдсэн дашбоард
+    </button>
+    <div class="nav-sec">Компаниуд</div>
+    <div id="coNav"></div>
+    <div class="divider"></div>
+    <div class="nav-sec">Тайлан</div>
+    <button class="nav-item" onclick="showPage('report',this)">
+      <i class="ti ti-file-analytics"></i>Харьцуулалт
+    </button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-row">
+      <div class="user-avatar">CF</div>
+      <div><div class="user-name">Группийн CFO</div><div class="user-role">Бүрэн эрх</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <h1 id="pageTitle">Нэгдсэн дашбоард</h1>
+    <div class="topbar-right">
+      <div class="period-selector">
+        <button class="period-btn" onclick="togglePeriodPicker()">
+          <i class="ti ti-calendar"></i>
+          <span id="periodLabel">2024 · Бүх сар</span>
+          <i class="ti ti-chevron-down" style="font-size:11px;color:var(--sub)"></i>
+        </button>
+        <div class="period-dropdown hidden" id="periodDropdown">
+          <div class="period-row">
+            <div class="period-col">
+              <div class="period-sec-title">Он</div>
+              <label class="period-item"><input type="radio" name="yr" value="2022" onchange="onYearChange(this)"> 2022</label>
+              <label class="period-item"><input type="radio" name="yr" value="2023" onchange="onYearChange(this)"> 2023</label>
+              <label class="period-item"><input type="radio" name="yr" value="2024" checked onchange="onYearChange(this)"> 2024</label>
+              <label class="period-item"><input type="radio" name="yr" value="2025" onchange="onYearChange(this)"> 2025</label>
+              <label class="period-item"><input type="radio" name="yr" value="2026" onchange="onYearChange(this)"> 2026</label>
+            </div>
+            <div class="period-divider"></div>
+            <div class="period-col">
+              <div class="period-sec-title">Сар
+                <button onclick="toggleAllMonths()" style="font-size:10px;padding:1px 6px;border-radius:5px;border:1px solid var(--border);background:none;cursor:pointer;color:var(--sub)">Бүгд</button>
+              </div>
+              <div class="month-grid">
+                <label class="period-item"><input type="checkbox" value="0"  onchange="onMonthChange()"> 1-р</label>
+                <label class="period-item"><input type="checkbox" value="1"  onchange="onMonthChange()"> 2-р</label>
+                <label class="period-item"><input type="checkbox" value="2"  onchange="onMonthChange()"> 3-р</label>
+                <label class="period-item"><input type="checkbox" value="3"  onchange="onMonthChange()"> 4-р</label>
+                <label class="period-item"><input type="checkbox" value="4"  onchange="onMonthChange()"> 5-р</label>
+                <label class="period-item"><input type="checkbox" value="5"  onchange="onMonthChange()"> 6-р</label>
+                <label class="period-item"><input type="checkbox" value="6"  onchange="onMonthChange()"> 7-р</label>
+                <label class="period-item"><input type="checkbox" value="7"  onchange="onMonthChange()"> 8-р</label>
+                <label class="period-item"><input type="checkbox" value="8"  onchange="onMonthChange()"> 9-р</label>
+                <label class="period-item"><input type="checkbox" value="9"  onchange="onMonthChange()"> 10-р</label>
+                <label class="period-item"><input type="checkbox" value="10" onchange="onMonthChange()"> 11-р</label>
+                <label class="period-item"><input type="checkbox" value="11" onchange="onMonthChange()"> 12-р</label>
+              </div>
+            </div>
+          </div>
+          <div class="period-footer">
+            <button onclick="applyPeriod()" class="period-apply">Хэрэглэх</button>
+            <button onclick="togglePeriodPicker()" class="btn-sm">Хаах</button>
+          </div>
+        </div>
+      </div>
+      <span id="connStatus">⬜</span>
+      <button class="btn-sm" onclick="refreshAll()"><i class="ti ti-refresh"></i></button>
+      <span id="lastUpd"></span>
+    </div>
+  </div>
+
+  <div id="coTabBar" class="co-tabs hidden">
+    <button class="co-tab active" id="ctab_sales"    onclick="selectCoPage(curCo,'sales')"><i class="ti ti-trending-up"></i>Борлуулалт</button>
+    <button class="co-tab"        id="ctab_expense"  onclick="selectCoPage(curCo,'expense')"><i class="ti ti-receipt"></i>Зардал</button>
+    <button class="co-tab"        id="ctab_cashflow" onclick="selectCoPage(curCo,'cashflow')"><i class="ti ti-arrows-exchange"></i>Мөнгөн урсгал</button>
+    <button class="co-tab"        id="ctab_ops"      onclick="selectCoPage(curCo,'ops')"><i class="ti ti-target"></i>Үйл ажиллагаа</button>
+    <button class="co-tab"        id="ctab_invest"   onclick="selectCoPage(curCo,'invest')"><i class="ti ti-building-bank"></i>Хөрөнгө оруулалт</button>
+  </div>
+
+  <div class="content">
+    <!-- НЭГДСЭН ДАШБОАРД -->
+    <div id="page-group-dash">
+      <div class="kpi-row" id="groupKpi"></div>
+      <div class="co-cards" id="coCards"></div>
+      <div class="charts-2">
+        <div class="sec">
+          <div class="sec-hd"><span class="sec-title">Борлуулалт: Төлөвлөгөө vs Гүйцэтгэл</span><span class="badge badge-p">Группийн нийт</span></div>
+          <div class="cw" style="height:200px"><canvas id="groupSalesChart"></canvas></div>
+        </div>
+        <div class="sec">
+          <div class="sec-hd"><span class="sec-title">Компаниудын гүйцэтгэл %</span></div>
+          <div class="cw" style="height:200px"><canvas id="groupCompChart"></canvas></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-hd"><span class="sec-title">Нэгдсэн харагдац</span><span class="badge" id="dashYearBadge">2024</span></div>
+        <table>
+          <thead><tr>
+            <th>Компани</th>
+            <th class="r">Борл. Төл.</th><th class="r">Борл. Гүйц.</th><th class="r">%</th>
+            <th class="r">Зардал Төл.</th><th class="r">Зардал Гүйц.</th><th class="r">%</th>
+            <th class="r">Хөр.Ор. Төл.</th><th class="r">Хөр.Ор. Гүйц.</th><th class="r">%</th>
+            <th>Статус</th>
+          </tr></thead>
+          <tbody id="dashTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- КОМПАНИЙН ДАШБОАРД -->
+    <div id="page-co-dash" class="hidden">
+      <div id="coSec_sales">
+        <div class="kpi-row" id="coKpi"></div>
+        <div class="charts-2">
+          <div class="sec">
+            <div class="sec-hd"><span class="sec-title">Борлуулалт: сараар</span><span class="badge badge-g" id="coSalesBadge">Sheets</span></div>
+            <div class="cw" style="height:200px"><canvas id="coSalesChart"></canvas></div>
+          </div>
+          <div class="sec">
+            <div class="sec-hd"><span class="sec-title">Ангиллаар</span></div>
+            <div class="cw" style="height:200px"><canvas id="coCatChart"></canvas></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-hd">
+            <span class="sec-title">Борлуулалтын дэлгэрэнгүй</span>
+            <div class="month-pills" id="coMonthPills" style="margin-bottom:0"></div>
+          </div>
+          <div style="overflow-x:auto;max-height:400px;overflow-y:auto">
+            <table><thead id="coThead"></thead><tbody id="coTbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+      <div id="coSec_expense" class="hidden">
+        <div class="kpi-row" id="expKpi"></div>
+        <div class="charts-2">
+          <div class="sec">
+            <div class="sec-hd"><span class="sec-title">Зардал: ангиллаар</span></div>
+            <div class="cw" style="height:240px"><canvas id="coExpChart"></canvas></div>
+          </div>
+          <div class="sec">
+            <div class="sec-hd"><span class="sec-title">Сарын зардлын динамик</span></div>
+            <div class="cw" style="height:240px"><canvas id="coExpMonthChart"></canvas></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-hd"><span class="sec-title">Зардлын дэлгэрэнгүй</span><span class="badge badge-o" id="expBadge">Mock</span></div>
+          <div style="overflow-x:auto;max-height:400px;overflow-y:auto">
+            <table><thead id="expThead"><tr><th>№</th><th>Зардлын нэр</th><th>Төрөл</th><th class="r">Нийт төсөв</th><th class="r">Төлөвлөгөө</th><th class="r">Гүйцэтгэл</th><th class="r">Зөрүү</th></tr></thead><tbody id="expTbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+      <div id="coSec_cashflow" class="hidden">
+        <div class="kpi-row" id="cfKpi"></div>
+        <div class="sec">
+          <div class="sec-hd">
+            <span class="sec-title">Мөнгөн урсгалын диаграм</span>
+            <div style="display:flex;gap:12px;font-size:11px;color:var(--sub)">
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--blue);display:inline-block"></span>Орлого</span>
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--red);display:inline-block"></span>Зарлага</span>
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block"></span>Цэвэр</span>
+            </div>
+          </div>
+          <div class="cw" style="height:260px"><canvas id="coCfChart"></canvas></div>
+        </div>
+        <div class="sec">
+          <div class="sec-hd"><span class="sec-title">Сарын дэлгэрэнгүй</span></div>
+          <table><thead id="cfThead"></thead><tbody id="cfTbody"></tbody></table>
+        </div>
+      </div>
+      <div id="coSec_ops" class="hidden">
+        <div class="kpi-row" id="opsKpi"></div>
+        <div class="sec">
+          <div class="sec-hd"><span class="sec-title">Жолоодогч үзүүлэлт</span><span class="badge badge-o">Mock өгөгдөл</span></div>
+          <table><thead><tr><th>Үзүүлэлт</th><th>Нэгж</th><th class="r">Нэгж үнэ</th><th class="r">Жилийн тоо</th><th class="r">Төсвийн нөлөө</th><th>Нөлөөлөх хэсэг</th></tr></thead><tbody id="opsTbody"></tbody></table>
+        </div>
+      </div>
+      <div id="coSec_invest" class="hidden">
+        <div class="kpi-row" id="invKpi"></div>
+        <div class="charts-2">
+          <div class="sec">
+            <div class="sec-hd"><span class="sec-title">Хөрөнгө оруулалт: төслөөр</span></div>
+            <div class="cw" style="height:200px"><canvas id="coInvChart"></canvas></div>
+          </div>
+          <div class="sec">
+            <div class="sec-hd"><span class="sec-title">Улирлын явц</span></div>
+            <div class="cw" style="height:200px"><canvas id="coInvQChart"></canvas></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-hd"><span class="sec-title">Төслийн дэлгэрэнгүй</span></div>
+          <table><thead><tr><th>Төсөл</th><th>Категори</th><th class="r">Төлөвлөгөө</th><th class="r">Гүйцэтгэл</th><th>Явц</th><th>Статус</th></tr></thead><tbody id="invTbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ХАРЬЦУУЛАЛТ -->
+    <div id="page-report" class="hidden">
+      <div class="sec">
+        <div class="sec-hd"><span class="sec-title">Группийн нэгдсэн харьцуулалт</span><span class="badge">Бүх компани</span></div>
+        <div class="cw" style="height:260px"><canvas id="reportChart"></canvas></div>
+      </div>
+      <div class="sec">
+        <div class="sec-hd"><span class="sec-title">Нийт дүн</span></div>
+        <table><thead><tr><th>Үзүүлэлт</th><th class="r">Нийт Төлөвлөгөө</th><th class="r">Нийт Гүйцэтгэл</th><th class="r">Зөрүү</th><th class="r">%</th></tr></thead><tbody id="reportTbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── URLs ──────────────────────────────────────────────────
+const URLS = {
+  a: 'https://script.google.com/macros/s/AKfycbyQ0WerXQOVWIpk8wwJqUQiqougWVb6VJwUn8Av3IaQwx9t5IoLvNLAihyLzZzsrJE/exec',
+  b: 'https://script.google.com/macros/s/AKfycbw_VAdPUECLsAeGE6UUb--YHddejM18lMsvdn4tt-SMXiGP8OA3YtQdiqY7TP4NffM/exec',
+  c: 'https://script.google.com/macros/s/AKfycbzHu5JS979yrfVEIuOCiaUStZq0gSPoBYNsCnBFNHoqqrRfEiVCngFhw40yx3VvAlj4/exec',
+  d: 'https://script.google.com/macros/s/AKfycbziNQbjSXs-yO3A0QDQL4-PnbvWYhgthLL3j4XEkxJxhQLVToJFAaUwsTTxUHm5aBA/exec'
+};
+
+const COS = {
+  a:{name:'Монгол Экүэстрэн', short:'М.Экүэстрэн', color:'#3B82F6', desc:'Эм ханган нийлүүлэх'},
+  b:{name:'Морьтон Эмнэлэг',  short:'М.Эмнэлэг',  color:'#10B981', desc:'Адууны эмнэлэг'},
+  c:{name:'Малч Сэтгэлгээ',   short:'М.Сэтгэлгээ', color:'#F59E0B', desc:'Малын эмийн сан'},
+  d:{name:'Морьтон Үржүүлэг', short:'М.Үржүүлэг', color:'#8B5CF6', desc:'Адуу үржүүлэг'}
+};
+
+const MOCK = {
+  a:{sales:{plan:[480,520,500,560,580,600,620,640,600,580,560,650],act:[460,510,490,570,600,590,610,630,580,560,540,620]},
+     expense:[{cat:'Цалин',plan:200,act:205},{cat:'Түрээс',plan:60,act:60},{cat:'Маркетинг',plan:50,act:44},{cat:'Бусад',plan:30,act:28}],
+     invest:[{proj:'Үйлдвэрийн өргөтгөл',plan:500,act:380,status:'Явагдаж байна'},{proj:'IT систем',plan:120,act:120,status:'Дууссан'}]},
+  b:{sales:{plan:[320,340,360,380,400,420,440,460,440,420,400,480],act:[330,350,355,390,410,430,450,470,450,430,410,490]},
+     expense:[{cat:'Цалин',plan:120,act:118},{cat:'Түрээс',plan:40,act:40},{cat:'Маркетинг',plan:35,act:40},{cat:'Бусад',plan:20,act:18}],
+     invest:[{proj:'Дэлгүүр нээх',plan:150,act:150,status:'Дууссан'},{proj:'Логистик систем',plan:80,act:60,status:'Явагдаж байна'}]},
+  c:{sales:{plan:[160,170,180,200,220,240,260,280,260,240,220,300],act:[150,165,175,190,210,235,255,270,250,230,215,290]},
+     expense:[{cat:'Цалин',plan:80,act:82},{cat:'Түрээс',plan:30,act:30},{cat:'Маркетинг',plan:20,act:18},{cat:'Бусад',plan:15,act:14}],
+     invest:[{proj:'Ургамал тариалалт',plan:100,act:85,status:'Явагдаж байна'},{proj:'Агуулах',plan:60,act:60,status:'Дууссан'}]},
+  d:{sales:{plan:[200,220,240,260,280,300,320,340,320,300,280,360],act:[195,215,238,258,275,295,315,338,318,295,278,355]},
+     expense:[{cat:'Цалин',plan:100,act:102},{cat:'Даатгал',plan:40,act:40},{cat:'Бусад',plan:25,act:23}],
+     invest:[{proj:'Тээврийн хэрэгсэл',plan:300,act:280,status:'Явагдаж байна'},{proj:'GPS систем',plan:50,act:50,status:'Дууссан'}]}
+};
+
+const MONTHS=['1-р','2-р','3-р','4-р','5-р','6-р','7-р','8-р','9-р','10-р','11-р','12-р'];
+let liveData={}, fetchStatus={a:'idle',b:'idle',c:'idle',d:'idle'};
+let curCo='b', curPage='group-dash', selMonth=-1, selYear=2024, selMonths=[0,1,2,3,4,5,6,7,8,9,10,11], CH={};
+
+// ── Fetch ──────────────────────────────────────────────────
+async function fetchCo(co) {
+  if(fetchStatus[co]==='loading') return null;
+  fetchStatus[co]='loading';
+  updateCoNavBadge(co,'loading');
+  showBar(true);
+  try {
+    const res  = await fetch(`${URLS[co]}?sheet=all&company=${co}`);
+    const json = await res.json();
+    liveData[co] = {
+      sales:    json.sales,
+      purchase: json.purchase,
+      expense:  json.expense,
+      cashflow: json.cashflow,
+      invest:   json.invest,
+      ops:      json.ops
+    };
+    fetchStatus[co]='ok';
+    updateCoNavBadge(co,'live');
+    if(json.meta?.updatedAt) updateTs(json.meta.updatedAt);
+    return json;
+  } catch(e) {
+    fetchStatus[co]='error';
+    updateCoNavBadge(co,'error');
+    showErr(`${COS[co].name}: ${e.message}`);
+    return null;
+  } finally {
+    showBar(false);
+    // Update global status icon
+    const allOk = Object.keys(COS).every(k=>liveData[k]?.sales?.rows);
+    const anyOk = Object.keys(COS).some(k=>liveData[k]?.sales?.rows);
+    setStatus(allOk?'ok':anyOk?'partial':'error');
+  }
+}
+
+async function fetchAll() {
+  setStatus('loading');
+  await Promise.all(Object.keys(COS).map(k=>fetchCo(k)));
+}
+
+async function refreshAll() {
+  await fetchAll();
+  renderPage(curPage);
+}
+
+function updateCoNavBadge(co, state) {
+  const b = document.getElementById('badge_'+co);
+  if(!b) return;
+  if(state==='loading'){ b.textContent='...'; b.className='nbadge load-badge'; }
+  else if(state==='live'){ b.textContent='live'; b.className='nbadge live-badge'; }
+  else if(state==='error'){ b.textContent='err'; b.className='nbadge' ; b.style.background='#FEE2E2'; b.style.color='#991B1B'; }
+  else { b.textContent='mock'; b.className='nbadge mock-badge'; }
+}
+
+// ── Period ─────────────────────────────────────────────────
+function togglePeriodPicker(){document.getElementById('periodDropdown').classList.toggle('hidden')}
+document.addEventListener('click',e=>{if(!document.querySelector('.period-selector')?.contains(e.target))document.getElementById('periodDropdown')?.classList.add('hidden')});
+function onYearChange(el){selYear=parseInt(el.value)}
+function onMonthChange(){selMonths=Array.from(document.querySelectorAll('.month-grid input:checked')).map(c=>parseInt(c.value))}
+function toggleAllMonths(){const all=selMonths.length===12;document.querySelectorAll('.month-grid input').forEach(c=>c.checked=!all);selMonths=all?[]:[0,1,2,3,4,5,6,7,8,9,10,11]}
+function applyPeriod(){
+  if(!selMonths.length){selMonths=[0,1,2,3,4,5,6,7,8,9,10,11];document.querySelectorAll('.month-grid input').forEach(c=>c.checked=true)}
+  const lbl=selMonths.length===12?'Бүх сар':selMonths.length===1?MONTHS[selMonths[0]]+' сар':selMonths.length+' сар';
+  document.getElementById('periodLabel').textContent=`${selYear} · ${lbl}`;
+  document.getElementById('dashYearBadge').textContent=selYear;
+  togglePeriodPicker();renderPage(curPage);
+}
+function initPeriodPicker(){document.querySelectorAll('.month-grid input').forEach(c=>c.checked=true)}
+
+function getSalesSumByPeriod(co){
+  let plan=0,act=0;const planArr=Array(12).fill(0),actArr=Array(12).fill(0);
+  if(liveData[co]?.sales?.rows){
+    liveData[co].sales.rows.forEach(r=>{selMonths.forEach(mi=>{const m=r.months?.[mi]||{};plan+=m.planDun||0;act+=m.actDun||0;planArr[mi]+=m.planDun||0;actArr[mi]+=m.actDun||0})});
+  } else {
+    selMonths.forEach(mi=>{plan+=(MOCK[co].sales.plan[mi]||0)*1e6;act+=(MOCK[co].sales.act[mi]||0)*1e6;planArr[mi]=(MOCK[co].sales.plan[mi]||0)*1e6;actArr[mi]=(MOCK[co].sales.act[mi]||0)*1e6});
+  }
+  return{plan,act,planArr,actArr};
+}
+
+// ── Nav ────────────────────────────────────────────────────
+function buildCoNav(){
+  document.getElementById('coNav').innerHTML=Object.entries(COS).map(([k,co])=>`
+    <button class="co-item" id="coNav_${k}" onclick="selectCo('${k}')">
+      <span class="co-dot" style="background:${co.color}"></span>
+      <span style="flex:1;text-align:left"><span style="display:block;font-size:12px">${co.name}</span><span style="display:block;font-size:10px;color:var(--sub)">${co.desc}</span></span>
+      <span class="nbadge mock-badge" id="badge_${k}">mock</span>
+    </button>`).join('');
+}
+
+function selectCo(co){
+  curCo=co;selMonth=-1;
+  document.querySelectorAll('.co-item').forEach(e=>e.classList.remove('active'));
+  document.getElementById('coNav_'+co)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+  if(!liveData[co]?.sales?.rows){fetchCo(co).then(()=>selectCoPage(co,'sales'));}
+  else selectCoPage(co,'sales');
+}
+
+function selectCoPage(co,page){
+  curCo=co;curPage='co-'+page;selMonth=-1;
+  document.getElementById('coTabBar').classList.remove('hidden');
+  document.querySelectorAll('.co-tab').forEach(e=>e.classList.remove('active'));
+  document.getElementById('ctab_'+page)?.classList.add('active');
+  const menu={sales:'Борлуулалт',expense:'Зардал',cashflow:'Мөнгөн урсгал',ops:'Үйл ажиллагаа',invest:'Хөрөнгө оруулалт'};
+  document.getElementById('pageTitle').textContent=`${COS[co].name} — ${menu[page]||''}`;
+  document.querySelectorAll('[id^="page-"]').forEach(e=>e.classList.add('hidden'));
+  document.getElementById('page-co-dash')?.classList.remove('hidden');
+  ['sales','expense','cashflow','ops','invest'].forEach(s=>document.getElementById('coSec_'+s)?.classList.add('hidden'));
+  document.getElementById('coSec_'+page)?.classList.remove('hidden');
+  if(page==='sales')renderCoSales(co);
+  else if(page==='expense')renderCoExpense(co);
+  else if(page==='cashflow')renderCoCashflow(co);
+  else if(page==='ops')renderCoOps(co);
+  else if(page==='invest')renderCoInvest(co);
+}
+
+function showPage(page,el){
+  curPage=page;
+  document.querySelectorAll('[id^="page-"]').forEach(e=>e.classList.add('hidden'));
+  document.getElementById('page-'+page)?.classList.remove('hidden');
+  document.getElementById('coTabBar').classList.add('hidden');
+  document.querySelectorAll('.co-item,.nav-item').forEach(e=>e.classList.remove('active'));
+  if(el)el.classList.add('active');
+  const T={'group-dash':'Нэгдсэн дашбоард',report:'Нэгдсэн харьцуулалт'};
+  document.getElementById('pageTitle').textContent=T[page]||page;
+  renderPage(page);
+}
+
+function renderPage(p){
+  if(p==='group-dash')renderGroupDash();
+  else if(p==='report')renderReport();
+  else if(p.startsWith('co-')){const tab=p.replace('co-','');selectCoPage(curCo,tab);}
+}
+
+// ── Helpers ────────────────────────────────────────────────
+function fmt(n){if(!n||n===0)return'-';return Math.round(n).toLocaleString('mn-MN')}
+function fmtB(n){if(!n)return'0';return Math.round(n/1e6).toLocaleString()+'сая'}
+function pct(a,b){return b===0?0:Math.round(a/b*100)}
+function dc(id){if(CH[id]){CH[id].destroy();delete CH[id]}}
+function setStatus(s){const m={loading:['🔄','#F59E0B'],partial:['🟡','#F59E0B'],ok:['🟢','#10B981'],error:['🔴','#EF4444']};const[i,c]=m[s]||['⬜','#8890A4'];const el=document.getElementById('connStatus');el.textContent=i;el.style.color=c}
+function showBar(s){document.getElementById('loadingBar').style.display=s?'block':'none'}
+function showErr(msg){const el=document.getElementById('errorMsg');el.textContent='⚠️ '+msg;el.style.display='block';setTimeout(()=>el.style.display='none',6000)}
+function updateTs(iso){document.getElementById('lastUpd').textContent=new Date(iso).toLocaleTimeString('mn-MN')}
+
+function kpiCard(label,val,sub,color,icon,posNeg){
+  return`<div class="kpi-card ${color}">
+    <div class="kpi-top"><span class="kpi-label">${label}</span><div class="kpi-icon ${color}"><i class="ti ${icon}"></i></div></div>
+    <div class="kpi-val">${val}</div>
+    <div class="kpi-sub ${posNeg}">${sub}</div>
+  </div>`;
+}
+function bar(p,col){const c=col||(p>=95?'var(--green)':p>=80?'var(--amber)':'var(--red)');return`<div class="pb"><div class="pf" style="width:${Math.min(p,100)}%;background:${c}"></div></div> <span style="font-size:11px">${p}%</span>`}
+
+// ── НЭГДСЭН ДАШБОАРД ──────────────────────────────────────
+function renderGroupDash(){
+  const keys=['a','b','c','d'];
+  let tSP=0,tSA=0,tEP=0,tEA=0,tIP=0,tIA=0;
+  const planArr=Array(12).fill(0),actArr=Array(12).fill(0);
+  keys.forEach(k=>{
+    const s=getSalesSumByPeriod(k);tSP+=s.plan;tSA+=s.act;
+    s.planArr.forEach((v,i)=>planArr[i]+=v);s.actArr.forEach((v,i)=>actArr[i]+=v);
+    if(liveData[k]?.expense?.rows){liveData[k].expense.rows.forEach(r=>{tEP+=r.annual?.plan||0;tEA+=r.annual?.act||0});}
+    else{MOCK[k].expense.forEach(e=>{tEP+=e.plan*1e6;tEA+=e.act*1e6})}
+    if(liveData[k]?.invest?.rows){liveData[k].invest.rows.forEach(r=>{tIP+=r.totalBudget||0;tIA+=r.actual||0});}
+    else{MOCK[k].invest.forEach(i=>{tIP+=i.plan*1e6;tIA+=i.act*1e6})}
+  });
+  const cfNet=tSA-tEA;
+  const sP=pct(tSA,tSP),eP=pct(tEA,tEP),iP=pct(tIA,tIP);
+  document.getElementById('groupKpi').innerHTML=
+    kpiCard('Нийт борлуулалт',fmtB(tSA),`${sP}% · Төл: ${fmtB(tSP)}`,'blue','ti-trending-up',sP>=95?'pos':sP>=80?'warn':'neg')+
+    kpiCard('Нийт зардал',fmtB(tEA),`${eP}% · Төл: ${fmtB(tEP)}`,'amber','ti-receipt',eP<=100?'pos':'neg')+
+    kpiCard('Цэвэр мөнгөн урсгал',(cfNet>=0?'+':'')+fmtB(cfNet),cfNet>=0?'Эерэг урсгал':'Сөрөг урсгал',cfNet>=0?'green':'red','ti-arrows-exchange',cfNet>=0?'pos':'neg')+
+    kpiCard('Хөрөнгө оруулалт',fmtB(tIA),`${iP}% · Төл: ${fmtB(tIP)}`,'purple','ti-building-bank','');
+
+  let cards='';
+  keys.forEach(k=>{
+    const co=COS[k];const isLive=!!liveData[k]?.sales?.rows;
+    const s=getSalesSumByPeriod(k);
+    let ep=0,ea=0,ip=0,ia=0;
+    if(liveData[k]?.expense?.rows){liveData[k].expense.rows.forEach(r=>{ep+=r.annual?.plan||0;ea+=r.annual?.act||0});}
+    else{MOCK[k].expense.forEach(e=>{ep+=e.plan*1e6;ea+=e.act*1e6})}
+    if(liveData[k]?.invest?.rows){liveData[k].invest.rows.forEach(r=>{ip+=r.totalBudget||0;ia+=r.actual||0});}
+    else{MOCK[k].invest.forEach(i=>{ip+=i.plan*1e6;ia+=i.act*1e6})}
+    const pc=pct(s.act,s.plan);
+    const badge=fetchStatus[k]==='loading'?'load-badge':isLive?'live-badge':'mock-badge';
+    const badgeTxt=fetchStatus[k]==='loading'?'...':isLive?'live':'mock';
+    cards+=`<div class="co-card" onclick="selectCo('${k}')">
+      <div class="co-card-top">
+        <span class="co-dot" style="background:${co.color}"></span>
+        <span class="co-card-name">${co.name}</span>
+        <span class="nbadge ${badge}">${badgeTxt}</span>
+      </div>
+      <div class="co-card-val">${fmtB(s.act)}</div>
+      <div class="co-card-sub">Төлөвлөгөө: ${fmtB(s.plan)} · ${pc>=95?'<span class="pos">':'<span class="'+(pc>=80?'warn':'neg')+'">'}${pc}%</span></div>
+      <div class="co-card-bar"><div class="co-card-fill" style="width:${Math.min(pc,100)}%;background:${co.color}"></div></div>
+      <div class="co-card-footer"><span>Зардал: ${fmtB(ea)}</span><span style="color:var(--accent)">Дэлгэрэнгүй →</span></div>
+    </div>`;
+  });
+  document.getElementById('coCards').innerHTML=cards;
+
+  const labels=selMonths.map(i=>MONTHS[i]);
+  dc('groupSalesChart');
+  CH['groupSalesChart']=new Chart(document.getElementById('groupSalesChart'),{type:'bar',
+    data:{labels,datasets:[
+      {label:'Төлөвлөгөө',data:selMonths.map(i=>Math.round(planArr[i]/1e6)),backgroundColor:'rgba(124,58,237,0.15)',borderRadius:5,borderSkipped:false},
+      {label:'Гүйцэтгэл', data:selMonths.map(i=>Math.round(actArr[i]/1e6)), backgroundColor:'rgba(124,58,237,0.7)', borderRadius:5,borderSkipped:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:10,padding:10}}},scales:{y:{ticks:{callback:v=>v+'сая',font:{size:10}},grid:{color:'rgba(0,0,0,0.04)'}},x:{grid:{display:false}}}}});
+
+  const cpcts=keys.map(k=>{const s=getSalesSumByPeriod(k);return pct(s.act,s.plan)});
+  dc('groupCompChart');
+  CH['groupCompChart']=new Chart(document.getElementById('groupCompChart'),{type:'bar',
+    data:{labels:keys.map(k=>COS[k].short),datasets:[{data:cpcts,backgroundColor:keys.map(k=>COS[k].color),borderRadius:8,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:120,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'rgba(0,0,0,0.04)'}},x:{grid:{display:false}}}}});
+
+  let th='';
+  keys.forEach(k=>{
+    const isLive=!!liveData[k]?.sales?.rows;
+    const s=getSalesSumByPeriod(k);
+    let ep=0,ea=0,ip=0,ia=0;
+    if(liveData[k]?.expense?.rows){liveData[k].expense.rows.forEach(r=>{ep+=r.annual?.plan||0;ea+=r.annual?.act||0});}
+    else{MOCK[k].expense.forEach(e=>{ep+=e.plan*1e6;ea+=e.act*1e6})}
+    if(liveData[k]?.invest?.rows){liveData[k].invest.rows.forEach(r=>{ip+=r.totalBudget||0;ia+=r.actual||0});}
+    else{MOCK[k].invest.forEach(i=>{ip+=i.plan*1e6;ia+=i.act*1e6})}
+    const spc=pct(s.act,s.plan),epc=pct(ea,ep),ipc=pct(ia,ip);
+    const badge=fetchStatus[k]==='loading'?'load-badge':isLive?'live-badge':'mock-badge';
+    const badgeTxt=fetchStatus[k]==='loading'?'...':isLive?'live':'mock';
+    th+=`<tr>
+      <td><div style="display:flex;align-items:center;gap:7px"><span class="co-dot" style="background:${COS[k].color}"></span><strong>${COS[k].name}</strong><span class="nbadge ${badge}" style="margin-left:4px">${badgeTxt}</span></div></td>
+      <td class="r">${fmtB(s.plan)}</td><td class="r">${fmtB(s.act)}</td><td class="r ${spc>=95?'pos':spc>=80?'warn':'neg'}">${spc}%</td>
+      <td class="r">${fmtB(ep)}</td><td class="r">${fmtB(ea)}</td><td class="r ${epc<=100?'pos':'neg'}">${epc}%</td>
+      <td class="r">${fmtB(ip)}</td><td class="r">${fmtB(ia)}</td><td class="r">${ipc}%</td>
+      <td>${spc>=95?'<span class="pos">✓ Сайн</span>':spc>=80?'<span class="warn">⚠ Хэвийн</span>':'<span class="neg">✗ Анхаар</span>'}</td>
+    </tr>`;
+  });
+  const tSpc=pct(tSA,tSP),tEpc=pct(tEA,tEP),tIpc=pct(tIA,tIP);
+  th+=`<tr class="grand-tot">
+    <td>Группийн нийт</td>
+    <td class="r">${fmtB(tSP)}</td><td class="r">${fmtB(tSA)}</td><td class="r ${tSpc>=95?'pos':'neg'}">${tSpc}%</td>
+    <td class="r">${fmtB(tEP)}</td><td class="r">${fmtB(tEA)}</td><td class="r ${tEpc<=100?'pos':'neg'}">${tEpc}%</td>
+    <td class="r">${fmtB(tIP)}</td><td class="r">${fmtB(tIA)}</td><td class="r">${tIpc}%</td><td></td>
+  </tr>`;
+  document.getElementById('dashTable').innerHTML=th;
+}
+
+// ── КОМПАНИЙН БОРЛУУЛАЛТ ───────────────────────────────────
+function renderCoSales(co){
+  const isLive=!!liveData[co]?.sales?.rows;
+  let totalPlan=0,totalAct=0;
+  const planArr=Array(12).fill(0),actArr=Array(12).fill(0);
+  const catMap={};
+  if(isLive){
+    liveData[co].sales.rows.forEach(r=>{
+      r.months?.forEach((md,i)=>{planArr[i]+=md.planDun||0;actArr[i]+=md.actDun||0});
+      totalPlan+=r.annual?.planDun||0;totalAct+=r.annual?.actDun||0;
+      const c=r.cat||'Бусад';if(!catMap[c])catMap[c]={plan:0,act:0};
+      catMap[c].plan+=r.annual?.planDun||0;catMap[c].act+=r.annual?.actDun||0;
+    });
+  } else {
+    MOCK[co].sales.plan.forEach((v,i)=>{planArr[i]=v*1e6;totalPlan+=v*1e6});
+    MOCK[co].sales.act.forEach((v,i)=>{actArr[i]=v*1e6;totalAct+=v*1e6});
+  }
+  const sp=pct(totalAct,totalPlan);
+  document.getElementById('coKpi').innerHTML=
+    kpiCard('Борлуулалтын гүйцэтгэл',sp+'%',isLive?'🟢 Sheets өгөгдөл':'⚠️ Mock өгөгдөл',sp>=95?'green':sp>=80?'amber':'red','ti-chart-bar',sp>=95?'pos':sp>=80?'warn':'neg')+
+    kpiCard('Гүйцэтгэл (дүн)',fmtB(totalAct),'Зөрүү: '+fmtB(totalAct-totalPlan),'blue','ti-trending-up',totalAct>=totalPlan?'pos':'neg')+
+    kpiCard('Төлөвлөгөө (дүн)',fmtB(totalPlan),COS[co].name,'purple','ti-target','')+
+    kpiCard('Хамгийн өндөр сар',fmtB(Math.max(...actArr)),MONTHS[actArr.indexOf(Math.max(...actArr))]+' сар','amber','ti-star','');
+
+  document.getElementById('coSalesBadge').textContent=isLive?'🟢 Sheets':'⚠️ Mock';
+  dc('coSalesChart');
+  CH['coSalesChart']=new Chart(document.getElementById('coSalesChart'),{type:'bar',
+    data:{labels:MONTHS,datasets:[
+      {label:'Төл.',data:planArr.map(v=>Math.round(v/1e6)),backgroundColor:`${COS[co].color}25`,borderRadius:5,borderSkipped:false},
+      {label:'Гүйц.',data:actArr.map(v=>Math.round(v/1e6)),backgroundColor:COS[co].color,borderRadius:5,borderSkipped:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:10}}},scales:{y:{ticks:{callback:v=>v+'сая',font:{size:10}},grid:{color:'rgba(0,0,0,0.04)'}},x:{grid:{display:false}}}}});
+
+  dc('coCatChart');
+  if(isLive&&Object.keys(catMap).length>0){
+    const cats=Object.keys(catMap),vals=cats.map(c=>Math.round(catMap[c].plan)),tot=vals.reduce((a,b)=>a+b,0);
+    CH['coCatChart']=new Chart(document.getElementById('coCatChart'),{type:'doughnut',
+      data:{labels:cats,datasets:[{data:vals,backgroundColor:['#4285F4','#34A853','#FBBC04','#EA4335','#9C27B0','#00ACC1','#FF7043','#8BC34A'],borderWidth:2,borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:12,padding:8,generateLabels(ch){return ch.data.labels.map((l,i)=>{const v=ch.data.datasets[0].data[i],p=tot>0?Math.round(v/tot*100):0;return{text:`${l}  ${p}%`,fillStyle:ch.data.datasets[0].backgroundColor[i],strokeStyle:'#fff',lineWidth:1,index:i}})}}}}}});
+  }
+  buildMonthPills(co);renderCoTable(co);
+}
+
+function buildMonthPills(co){
+  let h=`<button class="mpill active" onclick="setMon(-1,this,'${co}')">Бүх сар</button>`;
+  MONTHS.forEach((m,i)=>h+=`<button class="mpill" onclick="setMon(${i},this,'${co}')">${m}</button>`);
+  document.getElementById('coMonthPills').innerHTML=h;
+}
+
+function setMon(i,el,co){selMonth=i;document.querySelectorAll('#coMonthPills .mpill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderCoTable(co);}
+
+function renderCoTable(co){
+  const isLive=!!liveData[co]?.sales?.rows;
+  if(!isLive){
+    document.getElementById('coThead').innerHTML='<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--sub)">⚠️ Google Sheets өгөгдөл байхгүй</td></tr>';
+    document.getElementById('coTbody').innerHTML='';return;
+  }
+  const rows=liveData[co].sales.rows,m=selMonth;
+  document.getElementById('coThead').innerHTML=`<tr><th>№</th><th>Код</th><th>Ангилал</th><th>Нэр</th><th class="r">Үнэ</th><th class="r">Plan тоо</th><th class="r">Act тоо</th><th class="r">Зөрүү тоо</th><th class="r">Plan дүн</th><th class="r">Act дүн</th><th class="r">%</th></tr>`;
+  const groups={};rows.forEach(r=>{const c=r.cat||'Бусад';if(!groups[c])groups[c]=[];groups[c].push(r)});
+  let tbody='',gPD=0,gAD=0,gPT=0,gAT=0;
+  Object.entries(groups).forEach(([cat,items])=>{
+    tbody+=`<tr class="grp"><td colspan="11" style="padding:6px 10px">${cat}</td></tr>`;
+    let cPD=0,cAD=0,cPT=0,cAT=0;
+    items.forEach(svc=>{
+      const d=m>=0?(svc.months[m]||{}):(svc.annual||{});
+      const pt=d.planToo||0,at=d.actToo||0,pd=d.planDun||0,ad=d.actDun||0;
+      cPD+=pd;cAD+=ad;cPT+=pt;cAT+=at;
+      const pc=pct(ad,pd);
+      tbody+=`<tr><td style="color:var(--sub);font-size:11px">${svc.no||''}</td><td style="color:var(--sub);font-size:11px">${svc.code||''}</td><td style="font-size:11px;color:var(--sub)">${cat}</td><td style="font-size:12px">${svc.name||''}</td><td class="r" style="font-size:11px">${svc.price?svc.price.toLocaleString():'-'}</td><td class="r">${pt||'-'}</td><td class="r">${at||'-'}</td><td class="r ${at-pt>=0?'pos':'neg'}">${at-pt>=0?'+':''}${at-pt}</td><td class="r" style="font-size:11px">${fmt(pd)}</td><td class="r" style="font-size:11px">${fmt(ad)}</td><td class="r ${pc>=95?'pos':pc>=80?'warn':'neg'}">${pc}%</td></tr>`;
+    });
+    tbody+=`<tr class="sub-tot"><td colspan="5" class="r" style="color:var(--sub)">${cat} нийт</td><td class="r">${cPT}</td><td class="r">${cAT}</td><td class="r ${cAT-cPT>=0?'pos':'neg'}">${cAT-cPT>=0?'+':''}${cAT-cPT}</td><td class="r">${fmt(cPD)}</td><td class="r">${fmt(cAD)}</td><td class="r ${pct(cAD,cPD)>=95?'pos':'neg'}">${pct(cAD,cPD)}%</td></tr>`;
+    gPD+=cPD;gAD+=cAD;gPT+=cPT;gAT+=cAT;
+  });
+  tbody+=`<tr class="grand-tot"><td colspan="5" class="r">Нийт нийлбэр</td><td class="r">${gPT}</td><td class="r">${gAT}</td><td class="r ${gAT-gPT>=0?'pos':'neg'}">${gAT-gPT>=0?'+':''}${gAT-gPT}</td><td class="r">${fmt(gPD)}</td><td class="r">${fmt(gAD)}</td><td class="r ${pct(gAD,gPD)>=95?'pos':'neg'}">${pct(gAD,gPD)}%</td></tr>`;
+  document.getElementById('coTbody').innerHTML=tbody;
+}
+
+// ── ЗАРДАЛ ────────────────────────────────────────────────
+function renderCoExpense(co){
+  const isLive=!!liveData[co]?.expense?.rows;
+  const rows=isLive?liveData[co].expense.rows:[];
+  let totalPlan=0,totalAct=0;
+  const catMap={},planArr=Array(12).fill(0),actArr=Array(12).fill(0);
+  if(isLive){
+    rows.forEach(r=>{
+      totalPlan+=r.annual?.plan||0;totalAct+=r.annual?.act||0;
+      r.months?.forEach((m,i)=>{planArr[i]+=m.plan||0;actArr[i]+=m.act||0});
+      const c=r.cat||'Бусад';if(!catMap[c])catMap[c]={plan:0,act:0};
+      catMap[c].plan+=r.annual?.plan||0;catMap[c].act+=r.annual?.act||0;
+    });
+  } else{MOCK[co].expense.forEach(e=>{totalPlan+=e.plan*1e6;totalAct+=e.act*1e6})}
+  const pc=pct(totalAct,totalPlan);
+  document.getElementById('expKpi').innerHTML=
+    kpiCard('Нийт зардал (гүйцэтгэл)',fmt(totalAct),`${pc}% · Төл: ${fmt(totalPlan)}`,'amber','ti-receipt',pc<=100?'pos':'neg')+
+    kpiCard('Хэмнэлт / Хэтрэлт',(totalAct-totalPlan<=0?'':'+')+(fmt(totalAct-totalPlan)),totalAct<=totalPlan?'Хэмнэсэн':'Хэтэрсэн',totalAct<=totalPlan?'green':'red','ti-arrows-exchange',totalAct<=totalPlan?'pos':'neg')+
+    kpiCard('Зардлын төрлийн тоо',isLive?[...new Set(rows.map(r=>r.cat).filter(Boolean))].length+' төрөл':'-','Ангиллаар','blue','ti-list','')+
+    kpiCard('Өгөгдлийн эх сурвалж',isLive?'Sheets':'Mock',isLive?'🟢 Холбогдсон':'⚠️ Mock горим',isLive?'green':'amber','ti-database','');
+  dc('coExpChart');
+  if(isLive&&Object.keys(catMap).length>0){
+    const cats=Object.keys(catMap),vals=cats.map(c=>Math.round(catMap[c].plan)),tot=vals.reduce((a,b)=>a+b,0);
+    CH['coExpChart']=new Chart(document.getElementById('coExpChart'),{type:'doughnut',
+      data:{labels:cats,datasets:[{data:vals,backgroundColor:['#4285F4','#34A853','#FBBC04','#EA4335','#9C27B0','#00ACC1','#FF7043','#8BC34A'],borderWidth:2,borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:12,padding:8,generateLabels(ch){return ch.data.labels.map((l,i)=>{const v=ch.data.datasets[0].data[i],p=tot>0?Math.round(v/tot*100):0;return{text:`${l}  ${p}%`,fillStyle:ch.data.datasets[0].backgroundColor[i],strokeStyle:'#fff',lineWidth:1,index:i}})}}}}}});
+  } else {
+    const exp=MOCK[co].expense;
+    CH['coExpChart']=new Chart(document.getElementById('coExpChart'),{type:'bar',
+      data:{labels:exp.map(e=>e.cat),datasets:[{label:'Төл.',data:exp.map(e=>e.plan),backgroundColor:'rgba(245,158,11,0.3)',borderRadius:5},{label:'Гүйц.',data:exp.map(e=>e.act),backgroundColor:'#F59E0B',borderRadius:5}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:10}}},x:{grid:{display:false}}}}});
+  }
+  dc('coExpMonthChart');
+  CH['coExpMonthChart']=new Chart(document.getElementById('coExpMonthChart'),{type:'bar',
+    data:{labels:MONTHS,datasets:[
+      {label:'Төлөвлөгөө',data:planArr.map(v=>Math.round(v)),backgroundColor:'rgba(245,158,11,0.2)',borderRadius:5,borderSkipped:false},
+      {label:'Гүйцэтгэл', data:actArr.map(v=>Math.round(v)), backgroundColor:'#F59E0B',borderRadius:5,borderSkipped:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:10}}},scales:{y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,0.04)'}},x:{grid:{display:false}}}}});
+  let h='';
+  if(isLive&&rows.length>0){
+    const groups={};rows.forEach(r=>{const c=r.cat||'Бусад';if(!groups[c])groups[c]=[];groups[c].push(r)});
+    let gP=0,gA=0;
+    Object.entries(groups).forEach(([cat,items])=>{
+      h+=`<tr class="grp"><td colspan="7" style="padding:6px 10px">${cat}</td></tr>`;
+      let cP=0,cA=0;
+      items.forEach(r=>{
+        const plan=r.annual?.plan||0,act=r.annual?.act||0,d=act-plan,p=pct(act,plan);
+        cP+=plan;cA+=act;
+        h+=`<tr><td style="color:var(--sub);font-size:11px">${r.no||''}</td><td style="font-size:12px">${r.name||''}</td><td style="font-size:11px;color:var(--sub)">${r.type||''}</td><td class="r" style="font-size:11px">${fmt(r.annualBudget||0)}</td><td class="r">${fmt(plan)}</td><td class="r">${fmt(act)}</td><td class="r ${d<=0?'pos':'neg'}" style="font-size:11px">${d<=0?'':'+'}${fmt(d)} <span style="color:var(--sub)">${p}%</span></td></tr>`;
+      });
+      const cd=cA-cP;
+      h+=`<tr class="sub-tot"><td colspan="4" class="r" style="color:var(--sub)">${cat} нийт</td><td class="r">${fmt(cP)}</td><td class="r">${fmt(cA)}</td><td class="r ${cd<=0?'pos':'neg'}">${cd<=0?'':'+'}${fmt(cd)}</td></tr>`;
+      gP+=cP;gA+=cA;
+    });
+    const gd=gA-gP;
+    h+=`<tr class="grand-tot"><td colspan="4" class="r">Нийт нийлбэр</td><td class="r">${fmt(gP)}</td><td class="r">${fmt(gA)}</td><td class="r ${gd<=0?'pos':'neg'}">${gd<=0?'':'+'}${fmt(gd)}</td></tr>`;
+    document.getElementById('expBadge').textContent='🟢 Google Sheets';
+    document.getElementById('expBadge').className='badge badge-g';
+  } else {
+    MOCK[co].expense.forEach(e=>{const d=e.act-e.plan;h+=`<tr><td colspan="2">${e.cat}</td><td></td><td class="r">${e.plan}</td><td class="r">${e.plan}</td><td class="r">${e.act}</td><td class="r ${d<=0?'pos':'neg'}">${d<=0?'':'+'}${d}</td></tr>`});
+  }
+  document.getElementById('expTbody').innerHTML=h;
+}
+
+// ── МӨНГӨН УРСГАЛ ─────────────────────────────────────────
+function renderCoCashflow(co){
+  liveData[co]=liveData[co]||{};
+  const isLive=!!liveData[co]?.cashflow?.rows?.length;
+  const rows=isLive?liveData[co].cashflow.rows:[];
+  let totalPlanIn=0,totalActIn=0,totalPlanOut=0,totalActOut=0;
+  const planArr=Array(12).fill(0),actArr=Array(12).fill(0);
+  const netPlan=Array(12).fill(0),netAct=Array(12).fill(0);
+  if(isLive){
+    rows.forEach(r=>{
+      const cat=(r.cat||'').toLowerCase();
+      const isIncome=cat.includes('орлого')||cat==='орлого';
+      const isTotal=cat.includes('нийт')||cat==='нийт';
+      if(isTotal)return;
+      r.months?.forEach((m,i)=>{
+        if(isIncome){planArr[i]+=m.plan||0;actArr[i]+=m.act||0;}
+        else{netPlan[i]+=m.plan||0;netAct[i]+=m.act||0;}
+      });
+      if(isIncome){totalPlanIn+=r.annual?.plan||0;totalActIn+=r.annual?.act||0;}
+      else{totalPlanOut+=r.annual?.plan||0;totalActOut+=r.annual?.act||0;}
+    });
+  } else {
+    const sales=MOCK[co].sales.plan;
+    sales.forEach((v,i)=>{planArr[i]=v*1e6;actArr[i]=MOCK[co].sales.act[i]*1e6});
+    const expM=MOCK[co].expense.reduce((s,e)=>s+e.plan,0)*1e6/12;
+    Array(12).fill(0).forEach((_,i)=>{netPlan[i]=expM;netAct[i]=expM*0.95});
+    totalPlanIn=sales.reduce((a,b)=>a+b,0)*1e6;
+    totalActIn=MOCK[co].sales.act.reduce((a,b)=>a+b,0)*1e6;
+    totalPlanOut=expM*12;totalActOut=expM*12*0.95;
+  }
+  const cfNetPlan=planArr.map((v,i)=>v-netPlan[i]);
+  const cfNetAct=actArr.map((v,i)=>v-netAct[i]);
+  const cumPlan=[],cumAct=[];let cp=0,ca=0;
+  cfNetPlan.forEach((v,i)=>{cp+=v;ca+=cfNetAct[i];cumPlan.push(cp);cumAct.push(ca)});
+  const tNetAct=cfNetAct.reduce((a,b)=>a+b,0);
+  const minCum=Math.min(...cumAct);
+  document.getElementById('cfKpi').innerHTML=
+    kpiCard('Нийт мөнгөн орлого',fmt(totalActIn),`Төл: ${fmt(totalPlanIn)}`,'blue','ti-trending-up',totalActIn>=totalPlanIn?'pos':'neg')+
+    kpiCard('Нийт мөнгөн зарлага',fmt(totalActOut),`Төл: ${fmt(totalPlanOut)}`,'amber','ti-trending-down',totalActOut<=totalPlanOut?'pos':'neg')+
+    kpiCard('Цэвэр урсгал',(tNetAct>=0?'+':'')+fmt(tNetAct),tNetAct>=0?'Эерэг урсгал':'Сөрөг урсгал',tNetAct>=0?'green':'red','ti-arrows-exchange',tNetAct>=0?'pos':'neg')+
+    kpiCard('Хамгийн бага хуримтлал',fmt(minCum),minCum<0?'Дутагдал бий':'Хангалттай',minCum<0?'red':'green','ti-piggy-bank',minCum<0?'neg':'pos');
+  dc('coCfChart');
+  CH['coCfChart']=new Chart(document.getElementById('coCfChart'),{type:'bar',
+    data:{labels:MONTHS,datasets:[
+      {label:'Мөнгөн орлого',data:actArr.map(v=>Math.round(v/1e6)),backgroundColor:'rgba(59,130,246,0.6)',borderRadius:5,order:2},
+      {label:'Мөнгөн зарлага',data:netAct.map(v=>-Math.round(v/1e6)),backgroundColor:'rgba(239,68,68,0.6)',borderRadius:5,order:2},
+      {label:'Цэвэр урсгал',data:cfNetAct.map(v=>Math.round(v/1e6)),type:'line',borderColor:'#10B981',backgroundColor:'rgba(16,185,129,0.08)',fill:true,tension:0.3,borderWidth:2,pointRadius:3,order:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:10}}},scales:{y:{ticks:{callback:v=>(v<0?'-':'')+Math.abs(v)+'сая',font:{size:10}},grid:{color:'rgba(0,0,0,0.04)'}},x:{grid:{display:false}}}}});
+  if(isLive){
+    let h='';const groups={};
+    rows.forEach(r=>{const c=r.cat||'Бусад';if(!groups[c])groups[c]=[];groups[c].push(r)});
+    Object.entries(groups).forEach(([cat,items])=>{
+      h+=`<tr class="grp"><td colspan="5" style="padding:5px 10px">${cat}</td></tr>`;
+      items.forEach(r=>{
+        const p=r.annual?.plan||0,a=r.annual?.act||0,d=a-p;
+        const isNeg=(r.cat||'').toLowerCase().includes('зарлага');
+        h+=`<tr><td style="font-size:12px">${r.name}</td><td class="r">${fmt(r.annualBudget||0)}</td><td class="r">${fmt(p)}</td><td class="r">${fmt(a)}</td><td class="r ${isNeg?(d<=0?'pos':'neg'):(d>=0?'pos':'neg')}">${d>=0?'+':''}${fmt(d)}</td></tr>`;
+      });
+    });
+    document.getElementById('cfTbody').innerHTML=h;
+    document.getElementById('cfThead').innerHTML=`<tr><th>Утга</th><th class="r">Нийт төсөв</th><th class="r">Нийт төлөвлөгөө</th><th class="r">Нийт гүйцэтгэл</th><th class="r">Зөрүү</th></tr>`;
+  } else {
+    document.getElementById('cfThead').innerHTML=`<tr><th>Сар</th><th class="r">Борлуулалт</th><th class="r">Мөнгөн орлого</th><th class="r">Зарлага</th><th class="r">Цэвэр урсгал</th><th class="r">Хуримтлал</th></tr>`;
+    let h='';
+    for(let i=0;i<12;i++){h+=`<tr><td>${MONTHS[i]} сар</td><td class="r">${Math.round(planArr[i]/1e6)}</td><td class="r">${Math.round(actArr[i]/1e6)}</td><td class="r">${Math.round(netAct[i]/1e6)}</td><td class="r ${cfNetAct[i]>=0?'pos':'neg'}">${cfNetAct[i]>=0?'+':''}${Math.round(cfNetAct[i]/1e6)}</td><td class="r ${cumAct[i]>=0?'pos':'neg'}">${Math.round(cumAct[i]/1e6)}</td></tr>`}
+    document.getElementById('cfTbody').innerHTML=h;
+  }
+}
+
+// ── ҮЙЛ АЖИЛЛАГАА ─────────────────────────────────────────
+function renderCoOps(co){
+  const ops=[{driver:'Гэрээт нийлүүлэлтийн тоо',unit:'гэрээ',annual:48,price:14.5,impact:'Борлуулалт'},{driver:'Борлуулсан эмийн хэмжээ',unit:'тн',annual:12,price:18.0,impact:'Борлуулалт'},{driver:'Ажилтны тоо',unit:'хүн',annual:18,price:6.8,impact:'Цалин зардал'}];
+  const tot=ops.reduce((s,o)=>s+Math.round(o.annual*o.price),0);
+  document.getElementById('opsKpi').innerHTML=
+    kpiCard('Жолоодогч үзүүлэлт',ops.length+' үзүүлэлт','Тохируулсан','blue','ti-adjustments','')+
+    kpiCard('Төсвийн нөлөөлөл',tot.toLocaleString()+'сая','Жилийн нийт','purple','ti-chart-pie','')+
+    kpiCard('Борлуулалтад нөлөөлөх',ops.filter(o=>o.impact==='Борлуулалт').reduce((s,o)=>s+Math.round(o.annual*o.price),0).toLocaleString()+'сая','','green','ti-trending-up','')+
+    kpiCard('Зардалд нөлөөлөх',ops.filter(o=>o.impact!=='Борлуулалт').reduce((s,o)=>s+Math.round(o.annual*o.price),0).toLocaleString()+'сая','','amber','ti-receipt','');
+  let h='';
+  ops.forEach(o=>{const bi=Math.round(o.annual*o.price);h+=`<tr><td>${o.driver}</td><td>${o.unit}</td><td class="r">${o.price}</td><td class="r">${o.annual.toLocaleString()}</td><td class="r pos">${bi.toLocaleString()} сая</td><td>${o.impact}</td></tr>`});
+  document.getElementById('opsTbody').innerHTML=h;
+}
+
+// ── ХӨРӨНГӨ ОРУУЛАЛТ ──────────────────────────────────────
+function renderCoInvest(co){
+  const inv=MOCK[co].invest;
+  let ip=0,ia=0;inv.forEach(i=>{ip+=i.plan;ia+=i.act});
+  const pc=pct(ia,ip);
+  document.getElementById('invKpi').innerHTML=
+    kpiCard('Хөрөнгө оруулалт %',pc+'%',inv.length+' төсөл',pc>=95?'green':pc>=80?'amber':'red','ti-building-bank',pc>=95?'pos':pc>=80?'warn':'neg')+
+    kpiCard('Нийт төлөвлөгөө',ip.toLocaleString()+'сая','','blue','ti-target','')+
+    kpiCard('Нийт гүйцэтгэл',ia.toLocaleString()+'сая','Зөрүү: '+(ia-ip).toLocaleString(),'purple','ti-check','')+
+    kpiCard('Дууссан төсөл',inv.filter(i=>i.status==='Дууссан').length+'/'+inv.length,inv.filter(i=>i.status==='Явагдаж байна').length+' явагдаж байна','green','ti-circle-check','');
+  dc('coInvChart');
+  CH['coInvChart']=new Chart(document.getElementById('coInvChart'),{type:'bar',
+    data:{labels:inv.map(i=>i.proj.length>14?i.proj.substring(0,14)+'…':i.proj),datasets:[{label:'Төл.',data:inv.map(i=>i.plan),backgroundColor:'rgba(139,92,246,0.3)',borderRadius:5},{label:'Гүйц.',data:inv.map(i=>i.act),backgroundColor:'#8B5CF6',borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:10}}},scales:{y:{ticks:{font:{size:10}}},x:{grid:{display:false}}}}});
+  dc('coInvQChart');
+  CH['coInvQChart']=new Chart(document.getElementById('coInvQChart'),{type:'line',
+    data:{labels:['Q1','Q2','Q3','Q4'],datasets:inv.map((i,idx)=>({label:i.proj.substring(0,12),data:[i.plan*0.25,i.plan*0.5,i.plan*0.75,i.plan],borderColor:['#8B5CF6','#EC4899','#10B981'][idx]||'#999',tension:0.3,borderWidth:2,pointRadius:4,fill:false}))},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:8}}},scales:{y:{ticks:{font:{size:10}}},x:{grid:{display:false}}}}});
+  let h='';
+  inv.forEach(i=>{const p=pct(i.act,i.plan);const sc=i.status==='Дууссан'?'pos':i.status==='Явагдаж байна'?'warn':'neg';h+=`<tr><td>${i.proj}</td><td style="color:var(--sub);font-size:11px">Дэд бүтэц</td><td class="r">${i.plan}сая</td><td class="r">${i.act}сая</td><td><div class="pb"><div class="pf" style="width:${Math.min(p,100)}%;background:#8B5CF6"></div></div> ${p}%</td><td class="${sc}">${i.status}</td></tr>`});
+  document.getElementById('invTbody').innerHTML=h;
+}
+
+// ── ХАРЬЦУУЛАЛТ ───────────────────────────────────────────
+function renderReport(){
+  const keys=['a','b','c','d'];
+  const sP=keys.map(k=>{const s=getSalesSumByPeriod(k);return Math.round(s.plan/1e6)});
+  const sA=keys.map(k=>{const s=getSalesSumByPeriod(k);return Math.round(s.act/1e6)});
+  const eP=keys.map(k=>{if(liveData[k]?.expense?.rows){let t=0;liveData[k].expense.rows.forEach(r=>t+=r.annual?.plan||0);return Math.round(t/1e6)}return MOCK[k].expense.reduce((a,b)=>a+b.plan,0)});
+  const eA=keys.map(k=>{if(liveData[k]?.expense?.rows){let t=0;liveData[k].expense.rows.forEach(r=>t+=r.annual?.act||0);return Math.round(t/1e6)}return MOCK[k].expense.reduce((a,b)=>a+b.act,0)});
+  dc('reportChart');
+  CH['reportChart']=new Chart(document.getElementById('reportChart'),{type:'bar',
+    data:{labels:keys.map(k=>COS[k].short),datasets:[
+      {label:'Борл.Төл.',data:sP,backgroundColor:'rgba(59,130,246,0.3)',borderRadius:5},
+      {label:'Борл.Гүйц.',data:sA,backgroundColor:'#3B82F6',borderRadius:5},
+      {label:'Зардал.Төл.',data:eP,backgroundColor:'rgba(245,158,11,0.3)',borderRadius:5},
+      {label:'Зардал.Гүйц.',data:eA,backgroundColor:'#F59E0B',borderRadius:5}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:10}}},scales:{y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,0.04)'}},x:{grid:{display:false}}}}});
+  const ts=sP.reduce((a,b)=>a+b,0),tsa=sA.reduce((a,b)=>a+b,0);
+  const te=eP.reduce((a,b)=>a+b,0),tea=eA.reduce((a,b)=>a+b,0);
+  document.getElementById('reportTbody').innerHTML=`
+    <tr><td>Борлуулалт (сая)</td><td class="r">${ts.toLocaleString()}</td><td class="r">${tsa.toLocaleString()}</td><td class="r ${tsa>=ts?'pos':'neg'}">${(tsa-ts).toLocaleString()}</td><td class="r">${pct(tsa,ts)}%</td></tr>
+    <tr><td>Зардал (сая)</td><td class="r">${te.toLocaleString()}</td><td class="r">${tea.toLocaleString()}</td><td class="r ${tea<=te?'pos':'neg'}">${(tea-te).toLocaleString()}</td><td class="r">${pct(tea,te)}%</td></tr>`;
+}
+
+// ── Init ──────────────────────────────────────────────────
+buildCoNav();
+initPeriodPicker();
+// 4 компанийг зэрэг fetch хийж, дараа нь dashboard render хийнэ
+fetchAll().then(()=>renderGroupDash());
+// 30 секунд тутамд шинэчлэх
+setInterval(()=>{fetchAll().then(()=>{if(curPage==='group-dash')renderGroupDash();else if(curPage==='report')renderReport();})},30000);
+</script>
+</body>
+</html>
